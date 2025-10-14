@@ -1,0 +1,27 @@
+{
+  "name": "demo-mcp",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "",
+    "lint-format": "biome check --write",
+    "inspector": "npx @modelcontextprotocol/inspector node build/index.js",
+    "serve": "ts-node ./server.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@biomejs/biome": "2.2.6",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.7.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.20.0",
+    "express": "^5.1.0",
+    "zod": "3.25.76"
+  }
+}
