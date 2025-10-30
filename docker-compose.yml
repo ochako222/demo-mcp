@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
   telegram-mcp:
     build:
       context: .
-      dockerfile: Dockerfile.telegram
+      dockerfile: src/telegram/Dockerfile.telegram
     container_name: telegram-mcp-server
     env_file:
       - .env
@@ -17,7 +15,7 @@ services:
   trading212-mcp:
     build:
       context: .
-      dockerfile: Dockerfile.trading212
+      dockerfile: src/trading212/Dockerfile.trading212
     container_name: trading212-mcp-server
     env_file:
       - .env

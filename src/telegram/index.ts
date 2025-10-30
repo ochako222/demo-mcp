@@ -8,6 +8,8 @@ import {
 } from "@modelcontextprotocol/sdk/types.js"
 import { TelegramClient } from "telegram"
 import { StringSession } from "telegram/sessions/index.js"
+import dotenv from "dotenv"
+dotenv.config()
 
 // Initialize Telegram client
 let telegramClient: TelegramClient | null = null

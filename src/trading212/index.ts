@@ -7,6 +7,8 @@ import {
 	ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js"
 import { Trading212ApiClient } from "./api-client.js"
+import dotenv from "dotenv"
+dotenv.config()
 
 // Initialize Trading 212 API client
 const apiClient = new Trading212ApiClient(
