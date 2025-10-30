@@ -23,7 +23,7 @@ export class Trading212ApiClient {
 		const response = await fetch(`${this.baseUrl}/equity/portfolio`, {
 			method: "GET",
 			headers: {
-				Authorization: this.credentials,
+				Authorization: `Basic ${this.credentials}`,
 				"Content-Type": "application/json",
 			},
 		})
@@ -53,7 +53,7 @@ export class Trading212ApiClient {
 		const response = await fetch(`${this.baseUrl}/equity/account/cash`, {
 			method: "GET",
 			headers: {
-				Authorization: this.credentials,
+				Authorization: `Basic ${this.credentials}`,
 				"Content-Type": "application/json",
 			},
 		})
@@ -99,7 +99,7 @@ export class Trading212ApiClient {
 		const response = await fetch(`${this.baseUrl}/${endpoint}`, {
 			method: "GET",
 			headers: {
-				Authorization: this.credentials,
+				Authorization: `Basic ${this.credentials}`,
 				"Content-Type": "application/json",
 			},
 		})
@@ -129,7 +129,7 @@ export class Trading212ApiClient {
 		const response = await fetch(`${this.baseUrl}/equity/account/info`, {
 			method: "GET",
 			headers: {
-				Authorization: this.credentials,
+				Authorization: `Basic ${this.credentials}`,
 				"Content-Type": "application/json",
 			},
 		})

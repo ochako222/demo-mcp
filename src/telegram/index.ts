@@ -1,5 +1,24 @@
 #!/usr/bin/env node
 
+import "../shared/env.js"
+
+// CRITICAL: Suppress ALL console output before importing Telegram library
+// This prevents any colored logs from polluting stdout and breaking MCP protocol
+const originalConsoleLog = console.log
+const originalConsoleWarn = console.warn
+const originalConsoleInfo = console.info
+const originalConsoleDebug = console.debug
+
+// Override console methods to suppress Telegram library output
+console.log = () => {}
+console.warn = () => {}
+console.info = () => {}
+console.debug = () => {}
+// Keep console.error for debugging but redirect to stderr
+console.error = (...args: any[]) => {
+	process.stderr.write(args.join(" ") + "\n")
+}
+
 import { Server } from "@modelcontextprotocol/sdk/server/index.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import {
@@ -8,8 +27,19 @@ import {
 } from "@modelcontextprotocol/sdk/types.js"
 import { TelegramClient } from "telegram"
 import { StringSession } from "telegram/sessions/index.js"
-import dotenv from "dotenv"
-dotenv.config()
+
+// Create a no-op logger to completely suppress all Telegram library output
+class SilentLogger {
+	log() {}
+	warn() {}
+	error() {}
+	info() {}
+	debug() {}
+	canSend() {
+		return false
+	}
+	setLevel() {}
+}
 
 // Initialize Telegram client
 let telegramClient: TelegramClient | null = null
@@ -23,7 +53,13 @@ async function initTelegramClient() {
 
 	telegramClient = new TelegramClient(session, apiId, apiHash, {
 		connectionRetries: 5,
+		// @ts-ignore - Pass custom silent logger
+		baseLogger: new SilentLogger(),
 	})
+
+	// Also set log level as backup
+	// @ts-ignore - setLogLevel accepts "none" as a valid level
+	telegramClient.setLogLevel("none")
 
 	await telegramClient.connect()
 	return telegramClient
@@ -180,10 +216,22 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
 	const transport = new StdioServerTransport()
 	await server.connect(transport)
-	console.error("Telegram MCP Server running on stdio")
+	// Server is now running and communicating via stdio
 }
 
+// Handle uncaught errors to prevent crashes
+process.on("uncaughtException", (error) => {
+	// Only log to stderr on fatal errors, avoid polluting stdout
+	if (error.message !== "write EPIPE") {
+		process.stderr.write(`Uncaught exception: ${error.message}\n`)
+	}
+})
+
+process.on("unhandledRejection", (reason) => {
+	process.stderr.write(`Unhandled rejection: ${reason}\n`)
+})
+
 main().catch((error) => {
-	console.error("Fatal error:", error)
+	process.stderr.write(`Fatal error: ${error.message}\n`)
 	process.exit(1)
 })

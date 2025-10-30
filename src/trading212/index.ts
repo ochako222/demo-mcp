@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 
+import "../shared/env.js"
 import { Server } from "@modelcontextprotocol/sdk/server/index.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import {
-	ListResourcesRequestSchema,
-	ReadResourceRequestSchema,
+	CallToolRequestSchema,
+	ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js"
 import { Trading212ApiClient } from "./api-client.js"
-import dotenv from "dotenv"
-dotenv.config()
 
 // Initialize Trading 212 API client
 const apiClient = new Trading212ApiClient(
@@ -16,7 +15,7 @@ const apiClient = new Trading212ApiClient(
 	process.env.TRADING212_API_SECRET || "",
 )
 
-// Create MCP server
+// Create MCP server with tools capability
 const server = new Server(
 	{
 		name: "trading212-mcp-server",
@@ -24,173 +23,182 @@ const server = new Server(
 	},
 	{
 		capabilities: {
-			resources: {},
+			tools: {},
 		},
 	},
 )
 
-// List available resources
-server.setRequestHandler(ListResourcesRequestSchema, async () => {
+// List available tools
+server.setRequestHandler(ListToolsRequestSchema, async () => {
 	return {
-		resources: [
+		tools: [
 			{
-				uri: "trading212://portfolio",
-				name: "Portfolio Overview",
+				name: "get_portfolio",
 				description:
 					"Get complete portfolio overview including cash, invested amount, total value, and all positions",
-				mimeType: "application/json",
+				inputSchema: {
+					type: "object",
+					properties: {},
+				},
 			},
 			{
-				uri: "trading212://account/cash",
-				name: "Account Cash",
+				name: "get_account_cash",
 				description:
 					"Get account cash information including free cash, total cash, and blocked amounts",
-				mimeType: "application/json",
+				inputSchema: {
+					type: "object",
+					properties: {},
+				},
 			},
 			{
-				uri: "trading212://orders/history",
-				name: "Orders History",
+				name: "get_orders_history",
 				description:
-					"Get historical orders. Supports query parameters: ?limit=50&ticker=AAPL",
-				mimeType: "application/json",
+					"Get historical orders with optional filtering by ticker and pagination",
+				inputSchema: {
+					type: "object",
+					properties: {
+						limit: {
+							type: "number",
+							description: "Maximum number of orders to return (default: 50)",
+						},
+						ticker: {
+							type: "string",
+							description:
+								"Filter orders by specific ticker symbol (e.g., AAPL)",
+						},
+						cursor: {
+							type: "number",
+							description: "Pagination cursor for fetching more results",
+						},
+					},
+				},
 			},
 			{
-				uri: "trading212://account/metadata",
-				name: "Account Metadata",
+				name: "get_account_metadata",
 				description: "Get account metadata including currency and account ID",
-				mimeType: "application/json",
+				inputSchema: {
+					type: "object",
+					properties: {},
+				},
 			},
 		],
 	}
 })
 
-// Handle resource reads
-server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
-	const { uri } = request.params
+// Handle tool calls
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+	const { name, arguments: args } = request.params
 
 	try {
-		const url = new URL(uri)
-
-		if (url.protocol !== "trading212:") {
-			throw new Error(`Unsupported protocol: ${url.protocol}`)
-		}
-
-		const path = url.pathname.replace(/^\/\//, "")
-
-		switch (path) {
-			case "portfolio": {
+		switch (name) {
+			case "get_portfolio": {
 				const portfolio = await apiClient.getPortfolio()
 
 				if (Trading212ApiClient.isError(portfolio)) {
 					return {
-						contents: [
+						content: [
 							{
-								uri,
-								mimeType: "application/json",
-								text: JSON.stringify({ error: portfolio.message }, null, 2),
+								type: "text",
+								text: `Error fetching portfolio: ${portfolio.message}`,
 							},
 						],
 					}
 				}
 
 				return {
-					contents: [
+					content: [
 						{
-							uri,
-							mimeType: "application/json",
+							type: "text",
 							text: JSON.stringify(portfolio, null, 2),
 						},
 					],
 				}
 			}
 
-			case "account/cash": {
+			case "get_account_cash": {
 				const cash = await apiClient.getAccountCash()
 
 				if (Trading212ApiClient.isError(cash)) {
 					return {
-						contents: [
+						content: [
 							{
-								uri,
-								mimeType: "application/json",
-								text: JSON.stringify({ error: cash.message }, null, 2),
+								type: "text",
+								text: `Error fetching account cash: ${cash.message}`,
 							},
 						],
 					}
 				}
 
 				return {
-					contents: [
+					content: [
 						{
-							uri,
-							mimeType: "application/json",
+							type: "text",
 							text: JSON.stringify(cash, null, 2),
 						},
 					],
 				}
 			}
 
-			case "orders/history": {
-				// Parse query parameters
-				const limit = url.searchParams.get("limit")
-				const ticker = url.searchParams.get("ticker")
-				const cursor = url.searchParams.get("cursor")
-
+			case "get_orders_history": {
 				const params: {
 					limit?: number
 					ticker?: string
 					cursor?: number
 				} = {}
 
-				if (limit) params.limit = Number.parseInt(limit)
-				if (ticker) params.ticker = ticker
-				if (cursor) params.cursor = Number.parseInt(cursor)
+				if (args && typeof args === "object") {
+					if ("limit" in args && typeof args.limit === "number") {
+						params.limit = args.limit
+					}
+					if ("ticker" in args && typeof args.ticker === "string") {
+						params.ticker = args.ticker
+					}
+					if ("cursor" in args && typeof args.cursor === "number") {
+						params.cursor = args.cursor
+					}
+				}
 
 				const orders = await apiClient.getOrdersHistory(params)
 
 				if (Trading212ApiClient.isError(orders)) {
 					return {
-						contents: [
+						content: [
 							{
-								uri,
-								mimeType: "application/json",
-								text: JSON.stringify({ error: orders.message }, null, 2),
+								type: "text",
+								text: `Error fetching orders history: ${orders.message}`,
 							},
 						],
 					}
 				}
 
 				return {
-					contents: [
+					content: [
 						{
-							uri,
-							mimeType: "application/json",
+							type: "text",
 							text: JSON.stringify(orders, null, 2),
 						},
 					],
 				}
 			}
 
-			case "account/metadata": {
+			case "get_account_metadata": {
 				const metadata = await apiClient.getAccountMetadata()
 
 				if (Trading212ApiClient.isError(metadata)) {
 					return {
-						contents: [
+						content: [
 							{
-								uri,
-								mimeType: "application/json",
-								text: JSON.stringify({ error: metadata.message }, null, 2),
+								type: "text",
+								text: `Error fetching account metadata: ${metadata.message}`,
 							},
 						],
 					}
 				}
 
 				return {
-					contents: [
+					content: [
 						{
-							uri,
-							mimeType: "application/json",
+							type: "text",
 							text: JSON.stringify(metadata, null, 2),
 						},
 					],
@@ -198,23 +206,25 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
 			}
 
 			default:
-				throw new Error(`Unknown resource path: ${path}`)
+				return {
+					content: [
+						{
+							type: "text",
+							text: `Unknown tool: ${name}`,
+						},
+					],
+					isError: true,
+				}
 		}
 	} catch (error) {
 		return {
-			contents: [
+			content: [
 				{
-					uri,
-					mimeType: "application/json",
-					text: JSON.stringify(
-						{
-							error: `Failed to read resource: ${error instanceof Error ? error.message : String(error)}`,
-						},
-						null,
-						2,
-					),
+					type: "text",
+					text: `Error executing tool: ${error instanceof Error ? error.message : String(error)}`,
 				},
 			],
+			isError: true,
 		}
 	}
 })
@@ -223,10 +233,22 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
 async function main() {
 	const transport = new StdioServerTransport()
 	await server.connect(transport)
-	console.error("Trading 212 MCP Server running on stdio")
+	// Server is now running and communicating via stdio
 }
 
+// Handle uncaught errors to prevent crashes
+process.on("uncaughtException", (error) => {
+	// Only log to stderr on fatal errors, avoid polluting stdout
+	if (error.message !== "write EPIPE") {
+		process.stderr.write(`Uncaught exception: ${error.message}\n`)
+	}
+})
+
+process.on("unhandledRejection", (reason) => {
+	process.stderr.write(`Unhandled rejection: ${reason}\n`)
+})
+
 main().catch((error) => {
-	console.error("Fatal error:", error)
+	process.stderr.write(`Fatal error: ${error.message}\n`)
 	process.exit(1)
 })
