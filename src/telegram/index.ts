@@ -8,24 +8,20 @@ import {
 } from "@modelcontextprotocol/sdk/types.js"
 import { TelegramClient } from "telegram"
 import { StringSession } from "telegram/sessions/index.js"
-import { config } from "./config.js"
 
 // Initialize Telegram client
 let telegramClient: TelegramClient | null = null
+const apiId = parseInt(process.env.TELEGRAM_API_ID || "0")
+const apiHash = process.env.TELEGRAM_API_HASH || ""
 
 async function initTelegramClient() {
 	if (telegramClient) return telegramClient
 
-	const session = new StringSession(config.telegram.sessionString)
+	const session = new StringSession(process.env.TELEGRAM_SESSION || "")
 
-	telegramClient = new TelegramClient(
-		session,
-		config.telegram.apiId,
-		config.telegram.apiHash,
-		{
-			connectionRetries: 5,
-		},
-	)
+	telegramClient = new TelegramClient(session, apiId, apiHash, {
+		connectionRetries: 5,
+	})
 
 	await telegramClient.connect()
 	return telegramClient

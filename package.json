@@ -4,8 +4,16 @@
 	"type": "module",
 	"scripts": {
 		"build": "tsc",
-		"dev": "tsx src/index.ts",
-		"start": "node dist/index.js"
+		"build:telegram": "tsc --project tsconfig.telegram.json",
+		"build:trading212": "tsc --project tsconfig.trading212.json",
+		"dev:telegram": "tsx src/telegram/index.ts",
+		"dev:trading212": "tsx src/trading212/index.ts",
+		"start:telegram": "node dist/telegram/index.js",
+		"start:trading212": "node dist/trading212/index.js",
+		"docker:build": "docker-compose build",
+		"docker:up": "docker-compose up",
+		"docker:down": "docker-compose down",
+		"docker:logs": "docker-compose logs -f"
 	},
 	"keywords": [],
 	"author": "",

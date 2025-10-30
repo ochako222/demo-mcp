@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  telegram-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile.telegram
+    container_name: telegram-mcp-server
+    env_file:
+      - .env
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    networks:
+      - mcp-network
+
+  trading212-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile.trading212
+    container_name: trading212-mcp-server
+    env_file:
+      - .env
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    networks:
+      - mcp-network
+
+networks:
+  mcp-network:
+    driver: bridge

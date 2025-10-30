@@ -1,0 +1,42 @@
+# Dependencies
+node_modules
+npm-debug.log
+package-lock.json
+
+# Build artifacts
+dist
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Documentation
+README.md
+*.md
+
+# Misc
+foo.*
+.claude
+biome.json
