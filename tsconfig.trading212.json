@@ -1,8 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "outDir": "dist/trading212",
-    "rootDir": "src/trading212"
-  },
-  "include": ["src/trading212/**/*"]
-}

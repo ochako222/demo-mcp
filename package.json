@@ -4,8 +4,8 @@
 	"type": "module",
 	"scripts": {
 		"build": "tsc",
-		"build:telegram": "tsc --project tsconfig.telegram.json",
-		"build:trading212": "tsc --project tsconfig.trading212.json",
+		"build:telegram": "tsc --project src/telegram/tsconfig.telegram.json",
+		"build:trading212": "tsc --project src/trading212/tsconfig.trading212.json",
 		"dev:telegram": "tsx src/telegram/index.ts",
 		"dev:trading212": "tsx src/trading212/index.ts",
 		"start:telegram": "node dist/telegram/index.js",

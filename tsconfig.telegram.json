@@ -1,8 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "outDir": "dist/telegram",
-    "rootDir": "src/telegram"
-  },
-  "include": ["src/telegram/**/*"]
-}
